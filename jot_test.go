@@ -11,6 +11,17 @@ func TestJotName(t *testing.T) {
     }
 }
 
+func TestJotTitle(t *testing.T) {
+    testJot := jotlib.Jot{} 
+    testBody := `This
+    is
+    a
+    test`
+    if testJot.SetBody(testBody); testJot.GetTitle() != "This" {
+        t.Errorf("The title's all wrong. Expected %s, got %s", "This", testJot.GetTitle())
+    }
+}
+
 func TestJotBody(t *testing.T) {
     testJot := jotlib.Jot{} 
     testBody := `This

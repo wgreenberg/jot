@@ -10,6 +10,7 @@ type Jottable interface {
     SetBody(string)
     Name() string
     SetName(string)
+    GetTitle() string
     Encrypt(key string) bool
     Decrypt(key string) bool
     Serialize()
@@ -28,6 +29,10 @@ func (j* Jot) SetBody(newBody string) {
 
 func (j Jot) Body() string {
     return strings.Join(j.lines, "\n")
+}
+
+func (j Jot) GetTitle() string {
+    return j.lines[0]
 }
 
 func (j* Jot) SetName(newName string) {
