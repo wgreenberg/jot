@@ -1,16 +1,15 @@
 package jotlib
 
 import "strings"
-import "crypto/rand"
 
-import "code.google.com/p/go.crypto/nacl/secretbox"
+import "github.com/wgreenberg/jot/jotlib/crypto"
 
 type Jottable interface {
     Body() string
     SetBody(string)
     Name() string
     SetName(string)
-    GetTitle() string
+    Title() string
     Encrypt(key string) bool
     Decrypt(key string) bool
     Serialize()
@@ -31,7 +30,7 @@ func (j Jot) Body() string {
     return strings.Join(j.lines, "\n")
 }
 
-func (j Jot) GetTitle() string {
+func (j Jot) Title() string {
     return j.lines[0]
 }
 
@@ -47,6 +46,15 @@ func (j Jot) LockData() string {
     return string(j.nonce[:24])
 }
 
+func (j Jot) Find(pattern string) (results []string) {
+    for _, line := range j.lines {
+        if strings.LastIndex(line, pattern) >= 0 {
+            results = append(results, line)
+        }
+    }
+    return results
+}
+
 func (j* Jot) SetLockData(data string) {
     var nonce [24]byte
 
@@ -60,7 +68,7 @@ func (j* Jot) Encrypt(key string) (err bool) {
         return true
     }
 
-    cryptotext, nonce, err := encrypt(key, j.Body())
+    cryptotext, nonce, err := crypto.EncryptMessage(key, j.Body())
     if !err {
         j.SetBody(cryptotext)
         j.nonce = nonce
@@ -71,52 +79,11 @@ func (j* Jot) Encrypt(key string) (err bool) {
 }
 
 func (j* Jot) Decrypt(key string) (err bool) {
-    plaintext, err := decrypt(key, j.nonce, j.Body())
+    plaintext, err := crypto.DecryptMessage(key, j.nonce, j.Body())
     if !err {
         j.SetBody(plaintext)
         j.IsEncrypted = false
         return false
     }
     return true
-}
-
-func encrypt(key string, message string) (out string, nonce [24]byte, err bool) {
-    var rawOut []byte
-    var rawKey [32]byte
-
-    // get the key as a 32 byte array
-    copy(rawKey[:], key)
-
-    // convert message to binary blob
-    rawMessage := []byte(message)
-
-    // randomize the nonce
-    rand.Reader.Read(nonce[:24])
-
-    rawOut = secretbox.Seal(rawOut[:0], rawMessage, &nonce, &rawKey)
-
-    out = string(rawOut)
-
-    return out, nonce, false
-}
-
-func decrypt(key string, nonce [24]byte, message string) (plaintext string, err bool) {
-    var rawOut []byte
-    var rawKey [32]byte
-
-    // get the key as a 32 byte array
-    copy(rawKey[:], key)
-
-    // convert message to binary blob
-    rawMessage := []byte(message)
-
-    var ok bool
-    rawOut, ok = secretbox.Open(rawOut[:0], rawMessage, &nonce, &rawKey)
-    if !ok {
-        return "", true
-    }
-
-    plaintext = string(rawOut)
-
-    return plaintext, false
 }
