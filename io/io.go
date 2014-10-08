@@ -61,3 +61,14 @@ func ReadJot (jotName string) (jot jotlib.Jot, err bool) {
 
     return newJot, false
 }
+
+func ReadAllJots() (jots []jotlib.Jot) {
+    jotFiles, _ := ioutil.ReadDir(config.GetJotDir())
+    for _, jotFile := range jotFiles {
+        newJot, err := ReadJot(jotFile.Name())
+        if !err {
+            jots = append(jots, newJot)
+        }
+    }
+    return jots
+}
