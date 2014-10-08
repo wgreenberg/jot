@@ -87,14 +87,14 @@ func main() {
         for _, jot := range jots {
             if len(jot.Find(os.Args[2])) > 0 {
                 for _, line := range jot.Find(os.Args[2]) {
-                    fmt.Printf("%s: %s\n", jot.Name(), line)
+                    fmt.Printf("%s\t%s\n", jot.Name(), line)
                 }
             }
         }
     case ACTION_LIST == action:
         jots := io.ReadAllJots()
         for _, jot := range jots {
-            fmt.Printf("%s: %s\n", jot.Name(), jot.Title())
+            fmt.Printf("%s\t%s\n", jot.Name(), jot.Title())
         }
     case ACTION_UNKNOWN == action:
         fmt.Printf("Error, don't know command: %s\n", os.Args)
