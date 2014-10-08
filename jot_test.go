@@ -17,8 +17,8 @@ func TestJotTitle(t *testing.T) {
     is
     a
     test`
-    if testJot.SetBody(testBody); testJot.GetTitle() != "This" {
-        t.Errorf("The title's all wrong. Expected %s, got %s", "This", testJot.GetTitle())
+    if testJot.SetBody(testBody); testJot.Title() != "This" {
+        t.Errorf("The title's all wrong. Expected %s, got %s", "This", testJot.Title())
     }
 }
 
