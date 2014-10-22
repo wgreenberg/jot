@@ -6,26 +6,23 @@ the act of taking quick plaintext notes, or jots, absolutely frictionless.
 Likewise, it aims to provide a central set of tools for searching through and
 keeping track of existing jots.
 
+`jot` was built on the principal that quick notes generally don't need to be 
+named (much like sticky notes), that they should all be plaintext and in a central
+location, and they should be easily viewable, editable and searchable via the 
+command line.
+
+All jots are saved in `$HOME/.jot`, and are opened in your favorite editor (which
+right now is `vim`; this will become configurable in the future)
+
 ### Basic usage
-The basic usage is as simple as running `jot` with no arguments. This opens your
-favorite text editor (right now just vim) to a new jot, which will be saved in
-`~/.jot` with a SHA based uuid filename.
 
-The idea here is that your jot's filename isn't as important as its content,
-and `jot` provides some nice (though simple) methods of perusing that content.
-The first line of every jot is known as its title, and is each jot's distinguishing
-feature rather than its filename.
-
-That said, if you'd like your jot to be named `something`, just run 
-`jot something` instead.
-
-### Viewing, searching, and listing jots
-
-* To open an existing jot, run `jot <jotname>` where jotname is the SHA uuid of the
-jot (or its custom name)
-* To get list of all jots, run `jot ls`
-* To search through your jots for some pattern, run `jot grep <pattern>`
+* `jot`: opens a new jot with a unique SHA filename in your jot directory
+* `jot <jotname>`: opens a new (or existing) jot named `jotname`
+* `jot ls`: lists all jots, along with their title (e.g. the first line of the jot)
+* `jot grep <pattern>`: searches through all jots for the given plaintext pattern
 
 ### To do:
 * implement `jot lock` and `jot unlock`, which encrypts/decrypts all jots
 * support other people's favorite text editors
+* bash/zsh autocompletion for jot names
+* `jot rm`
