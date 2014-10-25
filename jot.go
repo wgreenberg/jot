@@ -56,9 +56,14 @@ func CreateNewJot(name string) {
     cmd.Stdin = os.Stdin
     cmd.Stdout = os.Stdout
     cmd.Stderr = os.Stderr
-    err := cmd.Run()
-    if err != nil {
-        fmt.Printf("Error creating the jot: %s\n", err)
+    editorErr := cmd.Run()
+    newJot, jotReadErr := io.ReadJot(name)
+    if editorErr != nil {
+        fmt.Printf("Error creating the jot: %s\n", editorErr)
+    } else if newJot.Body() == "" {
+        fmt.Printf("Error creating the jot: jot body was empty\n")
+    } else if jotReadErr {
+        fmt.Printf("Error creating the jot: problems reading %s\n", newJotPath)
     } else {
         fmt.Printf("Successfully made jot %s\n", name)
     }
@@ -77,7 +82,63 @@ func main() {
             CreateNewJot(os.Args[1])
         }
     case ACTION_LOCK == action:
+        if len(os.Args) == 2 {
+            fmt.Printf("Error, need a jot to lock")
+            return
+        }
+        jotName := os.Args[2]
+        jot, err := io.ReadJot(jotName)
+        if !err {
+            if jot.IsEncrypted {
+                fmt.Printf("Jot %s is already locked! Unlock it first.", jotName)
+                return
+            }
+            passwd, err := io.PromptForPassword()
+            if err != nil {
+                fmt.Printf("Error getting password:", err)
+                return
+            }
+
+            encryptErr := jot.Encrypt(passwd)
+            if encryptErr {
+                fmt.Printf("Error encrypting jot")
+                return
+            }
+
+            writeErr := io.WriteJot(jot)
+            if writeErr {
+                fmt.Printf("Error writing jot")
+            }
+        }
     case ACTION_UNLOCK == action:
+        if len(os.Args) == 2 {
+            fmt.Printf("Error, need a jot to unlock")
+            return
+        }
+        jotName := os.Args[2]
+        jot, err := io.ReadJot(jotName)
+        if !err {
+            if !jot.IsEncrypted {
+                fmt.Printf("Jot %s is not locked!", jotName)
+                return
+            }
+            passwd, err := io.PromptForPassword()
+            if err != nil {
+                fmt.Printf("Error getting password:", err)
+                return
+            }
+
+            decryptErr := jot.Decrypt(passwd)
+            if decryptErr {
+                fmt.Printf("Error decrypting jot")
+                return
+            }
+
+            writeErr := io.WriteJot(jot)
+            if writeErr {
+                fmt.Printf("Error writing jot")
+            }
+        }
     case ACTION_GREP == action:
         jots := io.ReadAllJots()
         if len(os.Args) == 2 {
@@ -85,16 +146,24 @@ func main() {
             return
         }
         for _, jot := range jots {
-            if len(jot.Find(os.Args[2])) > 0 {
-                for _, line := range jot.Find(os.Args[2]) {
-                    fmt.Printf("%s\t%s\n", jot.Name(), line)
+            if !jot.IsEncrypted {
+                if len(jot.Find(os.Args[2])) > 0 {
+                    for _, line := range jot.Find(os.Args[2]) {
+                        fmt.Printf("%s\t%s\n", jot.Name(), line)
+                    }
                 }
             }
         }
     case ACTION_LIST == action:
         jots := io.ReadAllJots()
         for _, jot := range jots {
-            fmt.Printf("%s\t%s\n", jot.Name(), jot.Title())
+            var summary string
+            if jot.IsEncrypted {
+                summary = "[locked]"
+            } else {
+                summary = jot.Title()
+            }
+            fmt.Printf("%s\t%s\n", jot.Name(), summary)
         }
     case ACTION_UNKNOWN == action:
         fmt.Printf("Error, don't know command: %s\n", os.Args)

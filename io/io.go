@@ -4,11 +4,13 @@ import "io/ioutil"
 import "path/filepath"
 import "crypto/sha1"
 import "encoding/hex"
+import "strings"
 import "os"
 
 import "github.com/wgreenberg/jot/jotlib"
 import "github.com/wgreenberg/jot/config"
 
+import "code.google.com/p/gopass"
 import "code.google.com/p/go-uuid/uuid"
 
 // Generates a random jot name
@@ -21,17 +23,20 @@ func UniqueName() (name string) {
 
 func WriteJot (jot jotlib.Jot) (err bool) {
     jotFileName := filepath.Join(config.GetJotDir(), jot.Name())
+    lockFileName := filepath.Join(config.GetJotDir(), "." + jot.Name() + ".lock")
     ioerr := ioutil.WriteFile(jotFileName, []byte(jot.Body()), 0777)
     if ioerr != nil {
         return true
     }
 
     if jot.IsEncrypted {
-        lockFileName := filepath.Join(config.GetJotDir(), "." + jot.Name() + ".lock")
         ioerr := ioutil.WriteFile(lockFileName, []byte(jot.LockData()), 0777)
         if ioerr != nil {
             return true
         }
+    } else {
+        // ensure the lockfile is gone, we don't care if there was an error
+        os.Remove(lockFileName)
     }
 
     return false
@@ -62,13 +67,28 @@ func ReadJot (jotName string) (jot jotlib.Jot, err bool) {
     return newJot, false
 }
 
+func isLockFile (filename string) (isLock bool) {
+    if strings.HasSuffix(filename, ".lock") {
+        return true
+    }
+
+    return false
+}
+
 func ReadAllJots() (jots []jotlib.Jot) {
     jotFiles, _ := ioutil.ReadDir(config.GetJotDir())
     for _, jotFile := range jotFiles {
-        newJot, err := ReadJot(jotFile.Name())
-        if !err {
-            jots = append(jots, newJot)
+        if !isLockFile(jotFile.Name()) {
+            newJot, err := ReadJot(jotFile.Name())
+            if !err {
+                jots = append(jots, newJot)
+            }
         }
     }
     return jots
+}
+
+func PromptForPassword() (passwd string, err error) {
+    passwd, error := gopass.GetPass("Enter a password to lock this jot:\n")
+    return passwd, error
 }
